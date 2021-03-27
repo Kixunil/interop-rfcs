@@ -65,6 +65,10 @@ The interface file MUST contain these fields:
 * `_iface_name = "INTERFACE_NAME"`
 * `_iface_version = "SEMVER"`
 
+The interface file SHOULD contain these fields:
+
+* `_instance_id = "UNIQUE IDENTIFIER OF THE INSTANCE"`
+
 The interface file MAY contain these fields:
 
 * `_impl_name = "IMPLEMENTATION NAME"`
@@ -142,6 +146,22 @@ In case of simple parser, it would depend on:
 Similarly, it's possible (although maybe clunky) to support an arbitrary number
 of major versions by repeating the condition in the middle.
 
+### Instance ID
+
+The instance identifier allows de-duplicating services across different interfaces.
+If a service provides two different alternative interfaces and the client supports both
+then instance ID is mandatory and it's used to detect that there's only one service, not
+two.
+
+`lnd` and `lncli` are real-life examples where this is required.
+
+The instance ID is considered free-form, but with these recommendations:
+
+* In case of local service, use a path pointing to some file tied to that instance
+  (e.g. /etc/systemd/system/something.service)
+* If the remote instance has its own (natural) ID, use that one (e.g. public key)
+* If none of the above applies, use 16 random bytes encoded as hex
+
 ### Implementation name
 
 The name of implementation MAY be specified in `_impl_name` field. The service
@@ -210,6 +230,10 @@ symlink pointing (directly or indirectly) to the preferred implementation.
 The directory MUST be searched recursively, but `_default` files in
 subdirectories MUST be ignored. `_default` file MUST NOT point to a directory.
 This allows making union of per-user instances with system instances.
+
+If two feature-equivalent interfaces are available they MUST be deduplicated
+using `_instance_id`. The client is free to prefer any of the equivalent
+interfaces and MAY be configurable.
 
 The clients that don't support alternative implementations MUST be configured
 to read the `_default` file.
